@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import json
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,8 @@ from .components.layout import (
     sidebar_dataset_selector,
     sidebar_pair_selector,
 )
-from .data_loader import load_npz_sample, summarize_sample
+from .data_loader import build_sample_info, load_npz_sample, summarize_sample
+from .components.sample_info import render_sample_info
 from .discovery import format_timestamp
 from .error_analysis import compute_improvement_metrics, compute_temporal_metrics
 from .inference_engine import predict_from_sample
@@ -62,6 +64,15 @@ def render_ai_inference_dashboard() -> None:
         st.warning('No trained experiments with `model_best.pt` found under `experiments/`.')
         return
 
+    sample = load_npz_sample(sample_path)
+    model_config = {}
+    if pure_run and (pure_run.path / 'config.json').is_file():
+        model_config = json.loads((pure_run.path / 'config.json').read_text(encoding='utf-8'))
+    elif hybrid_run and (hybrid_run.path / 'config.json').is_file():
+        model_config = json.loads((hybrid_run.path / 'config.json').read_text(encoding='utf-8'))
+
+    render_sample_info(build_sample_info(sample, model_config))
+
     run_button = st.sidebar.button('▶ Run live inference', type='primary', key='ai_run_live')
 
     cache_key = (
@@ -89,7 +100,7 @@ def render_ai_inference_dashboard() -> None:
     times = preds['times']
     n_frames = gt.shape[0]
 
-    summary = summarize_sample(load_npz_sample(sample_path))
+    summary = summarize_sample(sample)
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric('Frames', summary['frames'])
