@@ -164,6 +164,7 @@ def simulate(
     history_max_temp = []
     history_radius = []
     history_velocity = []
+    history_flux = []
     history_liq_frac = []
 
     n_steps = int(time_total / dt)
@@ -190,6 +191,7 @@ def simulate(
             history_max_temp.append(max_temp)
             history_radius.append(float(mean_radius * 1000.0))
             history_velocity.append(float(v_n * 1000.0))
+            history_flux.append(float(q_interface / 1e6))
             history_liq_frac.append(max_liq)
 
             yield {
@@ -208,7 +210,8 @@ def simulate(
                 'mean_radius_history': history_radius.copy(),
                 'melt_radius_history': history_radius.copy(),
                 'velocity_history': history_velocity.copy(),
-                'liquid_frac_history': history_liq_frac.copy()
+                'flux_history': history_flux.copy(),
+                'liquid_frac_history': history_liq_frac.copy(),
             }
 
 

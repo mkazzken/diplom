@@ -30,6 +30,7 @@ def create_downloadable_npz(results):
         max_temp=results['max_temp'],
         melt_radius=results['melt_radius'],
         velocity=results['velocity'],
+        flux=results.get('flux', np.array([])),
         liq_frac_max=results['liq_frac_max'],
         source_centers=np.array(results['source_info']['centers']),
         sigma=results['source_info']['sigma'],
@@ -45,6 +46,36 @@ def create_downloadable_npz(results):
 
 def create_plot_png(fig):
     return fig.to_image(format='png', engine='kaleido')
+
+
+def _metrics_history_from_result(result: dict):
+    flux = result.get('flux')
+    if flux is None:
+        flux = np.zeros_like(result['time'], dtype=float)
+    return visualization.build_metrics_history_dataframe(
+        result['time'],
+        result['max_temp'],
+        result['melt_radius'],
+        result['velocity'],
+        flux,
+        result['liq_frac_max'],
+    )
+
+
+def _render_metrics_panel(plot_slot, table_slot, result: dict, T_m: float) -> None:
+    metrics_fig = visualization.create_multiple_metrics_figure(
+        result['time'],
+        result['max_temp'],
+        result['melt_radius'],
+        result['velocity'],
+        T_m=T_m,
+    )
+    plot_slot.plotly_chart(metrics_fig, use_container_width=True)
+    table_slot.dataframe(
+        _metrics_history_from_result(result),
+        use_container_width=True,
+        hide_index=True,
+    )
 
 
 def create_gif(frames, x, y, title, duration=0.15):
@@ -276,6 +307,7 @@ def render_physics_sandbox():
     liquid_plot = tab2.empty()
     source_plot = tab3.empty()
     metrics_plot = tab4.empty()
+    metrics_table = tab4.empty()
 
     if run_button:
         source_centers = []
@@ -390,11 +422,13 @@ def render_physics_sandbox():
                     zmax=max(max_temp, T_initial + 1)
                 )
 
-                temp_plot.plotly_chart(
-                    temp_fig,
-                    use_container_width=True,
-                    key=f'temp_plot_{step}'
-                )
+                _c1, _c2, _c3 = st.columns([1, 2, 1])
+                with _c2:
+                    temp_plot.plotly_chart(
+                        temp_fig,
+                        use_container_width=False,
+                        key=f'temp_plot_{step}',
+                    )
 
             with tab2:
                 liq_fig = visualization.create_liquid_fraction_figure(
@@ -404,11 +438,13 @@ def render_physics_sandbox():
                     title=f'Liquid fraction at t = {current_time:.3f} s'
                 )
 
-                liquid_plot.plotly_chart(
-                    liq_fig,
-                    use_container_width=True,
-                    key=f'liq_plot_{step}'
-                )
+                _c1, _c2, _c3 = st.columns([1, 2, 1])
+                with _c2:
+                    liquid_plot.plotly_chart(
+                        liq_fig,
+                        use_container_width=False,
+                        key=f'liq_plot_{step}',
+                    )
 
             with tab3:
                 source_fig = visualization.create_heat_source_figure(
@@ -420,25 +456,28 @@ def render_physics_sandbox():
                     title='Internal heat source distribution'
                 )
 
-                source_plot.plotly_chart(
-                    source_fig,
-                    use_container_width=True,
-                    key=f'source_plot_{step}'
-                )
+                _c1, _c2, _c3 = st.columns([1, 2, 1])
+                with _c2:
+                    source_plot.plotly_chart(
+                        source_fig,
+                        use_container_width=False,
+                        key=f'source_plot_{step}',
+                    )
 
             with tab4:
-                metrics_fig = visualization.create_multiple_metrics_figure(
-                    state['time_history'],
-                    state['max_temp_history'],
-                    state['mean_radius_history'],
-                    state['velocity_history'],
-                    T_m=material['T_m']
-                )
-
-                metrics_plot.plotly_chart(
-                    metrics_fig,
-                    use_container_width=True,
-                    key=f'metrics_plot_{step}'
+                snapshot = {
+                    'time': np.array(state['time_history']),
+                    'max_temp': np.array(state['max_temp_history']),
+                    'melt_radius': np.array(state['mean_radius_history']),
+                    'velocity': np.array(state['velocity_history']),
+                    'flux': np.array(state.get('flux_history', [])),
+                    'liq_frac_max': np.array(state['liquid_frac_history']),
+                }
+                _render_metrics_panel(
+                    metrics_plot,
+                    metrics_table,
+                    snapshot,
+                    material['T_m'],
                 )
 
             if len(st.session_state.animation_frames) < frame_limit:
@@ -458,6 +497,7 @@ def render_physics_sandbox():
                 'max_temp': np.array(final_result['max_temp_history']),
                 'melt_radius': np.array(final_result['mean_radius_history']),
                 'velocity': np.array(final_result['velocity_history']),
+                'flux': np.array(final_result.get('flux_history', [])),
                 'liq_frac_max': np.array(final_result['liquid_frac_history']),
                 'source_info': {
                     'centers': source_centers,
@@ -485,6 +525,14 @@ def render_physics_sandbox():
             placeholder_status.success(
                 'Simulation completed successfully.'
             )
+
+    if st.session_state.simulation_result is not None:
+        _render_metrics_panel(
+            metrics_plot,
+            metrics_table,
+            st.session_state.simulation_result,
+            st.session_state.simulation_result['params']['T_m'],
+        )
 
     if st.session_state.simulation_result is not None:
         st.sidebar.markdown('---')

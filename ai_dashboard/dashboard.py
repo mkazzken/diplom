@@ -237,9 +237,14 @@ def _render_metrics_tab(gt, pure, hybrid, times, pure_run, hybrid_run) -> None:
             create_error_histogram(gt[mid], pure[mid], hybrid[mid]),
             use_container_width=True,
         )
-        st.plotly_chart(create_scatter_comparison_figure(gt[mid], pure[mid], 'Pure AI'), use_container_width=True)
-        st.plotly_chart(create_scatter_comparison_figure(gt[mid], hybrid[mid], 'Hybrid'), use_container_width=True)
-        st.plotly_chart(create_correlation_figure(gt[mid], hybrid[mid], 'Hybrid'), use_container_width=True)
+        for fig in (
+            create_scatter_comparison_figure(gt[mid], pure[mid], 'Pure AI'),
+            create_scatter_comparison_figure(gt[mid], hybrid[mid], 'Hybrid'),
+            create_correlation_figure(gt[mid], hybrid[mid], 'Hybrid'),
+        ):
+            left, center, right = st.columns([1, 2, 1])
+            with center:
+                st.plotly_chart(fig, use_container_width=False)
 
     col1, col2 = st.columns(2)
     if pure_run and pure_run.history:
