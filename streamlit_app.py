@@ -1,3 +1,7 @@
+from ai_dashboard._torch_streamlit_patch import apply_torch_streamlit_patch
+
+apply_torch_streamlit_patch()
+
 import io
 from datetime import datetime
 
@@ -575,9 +579,8 @@ def main():
 
     with tab_physics:
         render_physics_sandbox()
-
     with tab_ai:
-        from ai_dashboard.inference_dashboard import render_ai_inference_dashboard
+        from ai_dashboard.dashboard import render_ai_inference_dashboard
         render_ai_inference_dashboard()
 
 

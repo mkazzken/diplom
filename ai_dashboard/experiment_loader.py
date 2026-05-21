@@ -49,27 +49,11 @@ def find_experiment_directories(root: Optional[Path] = None) -> List[Path]:
 
 def classify_experiment(name: str) -> str:
     key = name.lower()
-    if 'hybrid' in key or 'inspired_surrogate' in key:
+    if 'hybrid' in key or 'surrogate' in key or 'inspired' in key:
         return 'hybrid'
     if key.startswith('run_') or 'pure' in key:
         return 'pure'
     return 'other'
-
-
-def find_trained_experiments(root: Optional[Path] = None) -> List[Path]:
-    """Return experiment folders that contain model_best.pt and config.json."""
-    root = Path(root) if root is not None else Path.cwd()
-    trained = []
-    for base in SEARCH_DIRS:
-        experiments_root = root / base
-        if not experiments_root.is_dir():
-            continue
-        for sub in sorted(experiments_root.iterdir()):
-            if not sub.is_dir():
-                continue
-            if (sub / 'model_best.pt').exists() and (sub / 'config.json').exists():
-                trained.append(sub)
-    return trained
 
 
 def build_time_axis(config: Optional[dict], num_frames: int, default_dt: float = 0.01) -> np.ndarray:
