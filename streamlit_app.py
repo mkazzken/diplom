@@ -72,13 +72,7 @@ def create_gif(frames, x, y, title, duration=0.15):
     return gif_buffer
 
 
-def main():
-    st.set_page_config(
-        page_title='Stefan Problem Simulation Sandbox',
-        layout='wide',
-        initial_sidebar_state='expanded'
-    )
-
+def render_physics_sandbox():
     st.title('🔬 Stefan Problem Simulation Sandbox')
 
     st.markdown(
@@ -568,6 +562,23 @@ def main():
 
     st.sidebar.code('pip install -r requirements.txt')
     st.sidebar.code('streamlit run streamlit_app.py')
+
+
+def main():
+    st.set_page_config(
+        page_title='Stefan Problem Research Platform',
+        layout='wide',
+        initial_sidebar_state='expanded',
+    )
+
+    tab_physics, tab_ai = st.tabs(['Physics Sandbox', 'AI Inference Dashboard'])
+
+    with tab_physics:
+        render_physics_sandbox()
+
+    with tab_ai:
+        from ai_dashboard.inference_dashboard import render_ai_inference_dashboard
+        render_ai_inference_dashboard()
 
 
 if __name__ == '__main__':

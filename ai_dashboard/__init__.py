@@ -1,6 +1,7 @@
 """AI comparison package for the Stefan problem sandbox."""
 
 from .ai_comparison import render_ai_comparison_tab
+from .inference_dashboard import render_ai_inference_dashboard
 from .experiment_loader import find_experiment_directories, load_experiment
 from .playback_controller import render_playback_controls
 from .error_analysis import compute_error_maps, compute_temporal_metrics, compute_improvement_metrics
